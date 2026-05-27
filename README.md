@@ -191,11 +191,16 @@ See [KNOWN_ISSUES.md](KNOWN_ISSUES.md) for a full list. The short version:
 ## Example: IoT Device Enclosure (SolarLoader)
 
 The `examples/SolarLoader/` folder contains the complete scripts for a split-shell
-3D-printed enclosure for a Feather-based IoT stack:
+3D-printed enclosure for the **SolarLoader** — a solar charge controller with local
+display, RS485 communication, and SD card logging, built on the Adafruit FeatherWing
+ecosystem (ESP32-S3 Reverse TFT Feather + AdaloggerWing + RS485Wing).
 
-- `fusion_unterschale.py` — Bottom shell with display window, USB-C slot, SD card slot,
-  standoffs, board screw holes, and a snap-fit connection lip
-- `fusion_oberschale.py` — Top shell with RS485 cable exit and M4 mounting holes
+> **Firmware & software:** [github.com/exercise69/Solar-Loader](https://github.com/exercise69/Solar-Loader)
+
+Scripts:
+- `fusion_unterschale.py` — Bottom shell: display window, USB-C slot, SD card slot,
+  standoffs, M2 board screws, snap-fit connection lip
+- `fusion_oberschale.py` — Top shell: RS485 cable exit, M4 mounting holes
 - `SolarLoaderCase.scad` — Original OpenSCAD prototype (same geometry, for reference)
 
 ---

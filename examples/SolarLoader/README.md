@@ -1,7 +1,23 @@
 # SolarLoader Enclosure — Example Scripts
 
-Split-shell 3D-printed enclosure for an ESP32-S3 Reverse TFT Feather + 3 FeatherWings
-IoT stack (solar charge controller + display + RS485 + SD logging).
+Split-shell 3D-printed enclosure for the **SolarLoader** IoT device — a solar charge
+controller with local display, RS485 communication, and SD card logging.
+
+> **Software / Firmware:** [github.com/exercise69/Solar-Loader](https://github.com/exercise69/Solar-Loader)
+
+## Hardware Stack
+
+| Layer | Board | Function |
+|-------|-------|----------|
+| Bottom | Adafruit ESP32-S3 Reverse TFT Feather | MCU + 1.14" TFT display (front-facing) |
+| + | Adafruit AdaloggerFeatherWing | microSD card logging |
+| + | Adafruit RS485 FeatherWing | Modbus RTU communication |
+| Top | Power supply + screw terminals | RS485 cable connection |
+
+All boards use the standard Adafruit FeatherWing form factor and stack vertically.
+The display faces the front (bottom) of the enclosure; the RS485 cable exits the top shell.
+
+Total PCB stack: approx. 52 × 23 × 32 mm (X × Y × Z).
 
 ## Files
 
