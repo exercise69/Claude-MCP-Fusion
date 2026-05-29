@@ -25,11 +25,11 @@ def run(_context):
 
     ix0, ix1 = asm_x0 - clearance, asm_x1 + clearance
     iy0, iy1 = asm_y0 - clearance, asm_y1 + clearance
-    iz1 = top_z + f.cm(1.0)            # = 35.0mm
+    iz1 = top_z + f.cm(10.0)           # = 44.0mm  (10mm Luft über Bauteilen)
 
     ox0, ox1 = ix0 - wall, ix1 + wall
     oy0, oy1 = iy0 - wall, iy1 + wall
-    oz1 = iz1 + wall                   # = 37.5mm
+    oz1 = iz1 + wall                   # = 46.5mm
 
     pcb_cy = (asm_y0 + asm_y1) / 2
 
@@ -37,8 +37,8 @@ def run(_context):
     rs485_y0, rs485_y1 = f.cm(5.0),  f.cm(18.0)
     rs485_z0, rs485_z1 = f.cm(23.0), f.cm(32.0)
 
-    # Montage-Löcher im Deckel (M4)
-    mount_xs = [f.cm(8.0), f.cm(46.8)]
+    # Montage-Löcher im Deckel (M4) — symmetrisch, je 9.7mm vom Rand
+    mount_xs = [f.cm(5.4), f.cm(44.2)]
     mount_d  = f.cm(4.2)
 
     # ── OBERSCHALE ERSTELLEN ─────────────────────────────────────────────
