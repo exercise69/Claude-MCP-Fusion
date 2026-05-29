@@ -155,12 +155,13 @@ def run(_context):
     f.join(us, shell, lip)
     print("  Steckzunge + 2 Schnapp-Clips fertig")
 
-    # 6. Display-Mulde: 1.5mm tief in Vorderfläche einsenken
-    #    Standoffs bei X=2.54mm und X=48.26mm liegen AUSSERHALB der Mulde → kein Konflikt
+    # 6. Display-Mulde: 1.5mm tief von INNEN (iz0-Seite) einsenken
+    #    → Außenfläche bleibt glatt; Tasche nur von innen sichtbar (Adafruit-Stil)
+    #    Restwand außen: wall - recess_depth = 2.5 - 1.5 = 1mm
     f.cut(us, shell, f.box(us,
-        recess_x0, recess_y0, oz0 - f.cm(0.1),
-        recess_x1, recess_y1, oz0 + recess_depth + f.cm(0.1)))
-    print("  Display-Mulde eingesenkt  (1.5mm tief, 1mm Restwand)")
+        recess_x0, recess_y0, iz0 - recess_depth - f.cm(0.1),
+        recess_x1, recess_y1, iz0 + f.cm(0.1)))
+    print("  Display-Mulde eingesenkt  (von innen, 1mm Restwand außen)")
 
     # 7. TFT-Fenster: komplett durchbrochen (durch volle 2.5mm Wand)
     f.cut(us, shell, f.box(us,
