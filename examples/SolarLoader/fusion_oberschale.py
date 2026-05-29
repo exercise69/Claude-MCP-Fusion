@@ -84,14 +84,7 @@ def run(_context):
     pz0 = clip_z0 - f.cm(0.1)   # Fenster etwas tiefer starten (Montagespiel)
     pz1 = pz0 + ph
 
-    # Linke Innenwand
-    f.cut(oc, shell, f.box(oc,
-        ix0 - pd,        cy_lip - pw/2, pz0,
-        ix0 + f.cm(0.1), cy_lip + pw/2, pz1))
-    # Rechte Innenwand
-    f.cut(oc, shell, f.box(oc,
-        ix1 - f.cm(0.1), cy_lip - pw/2, pz0,
-        ix1 + pd,        cy_lip + pw/2, pz1))
+    # Nur die langen Seiten (vorne + hinten, Y-Richtung)
     # Vordere Innenwand
     f.cut(oc, shell, f.box(oc,
         cx_lip - pw/2, iy0 - pd,        pz0,

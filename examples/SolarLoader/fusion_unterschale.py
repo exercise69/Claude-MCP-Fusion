@@ -132,12 +132,7 @@ def run(_context):
                                       x1 + f.cm(0.1), y1 + f.cm(0.1), clip_z0 + f.cm(0.1)))
         f.join(us, lip, tab)
 
-    # Linke Wand (Überstand in -X)
-    add_clip(lx0 - clip_p,  cy_lip - clip_w/2, clip_zr,
-             lx0 + clip_ov, cy_lip + clip_w/2, clip_z1, 'x', -1)
-    # Rechte Wand (Überstand in +X)
-    add_clip(lx1 - clip_ov, cy_lip - clip_w/2, clip_zr,
-             lx1 + clip_p,  cy_lip + clip_w/2, clip_z1, 'x', +1)
+    # Nur die langen Seiten (vorne + hinten, Y-Richtung)
     # Vordere Wand (Überstand in -Y)
     add_clip(cx_lip - clip_w/2, ly0 - clip_p,  clip_zr,
              cx_lip + clip_w/2, ly0 + clip_ov, clip_z1, 'y', -1)
@@ -146,7 +141,7 @@ def run(_context):
              cx_lip + clip_w/2, ly1 + clip_p,  clip_z1, 'y', +1)
 
     f.join(us, shell, lip)
-    print("  Steckzunge + 4 Schnapp-Clips hinzugefügt")
+    print("  Steckzunge + 2 Schnapp-Clips hinzugefügt (vorne + hinten)")
 
     # 6. Display-Fenster
     f.cut(us, shell, f.box(us,
