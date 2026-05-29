@@ -82,13 +82,15 @@ def run(_context):
     csk_dep = f.cm(1.5)
 
     # Steckzunge
-    lip_h, lip_wall, lip_gap = f.cm(4.0), f.cm(1.5), f.cm(0.25)
+    # lip_wall=1.6mm = 4 Perimeter bei 0.4mm Nozzle (war 1.5mm = 3.75 → unrund)
+    lip_h, lip_wall, lip_gap = f.cm(4.0), f.cm(1.6), f.cm(0.25)
 
     # ── Display-Mulde ───────────────────────────────────────────────────
     # Maße: deckt Display-Modul-BB (X≈12..40mm, Y≈2.5..20mm),
     #        D0/D1/D2-Taster (X=7.6mm) und Reset (X=44.5mm) ab.
-    # wall=2.5mm → recess_depth=1.5mm → Restwand=1mm
-    recess_depth = f.cm(1.5)
+    # wall=2.5mm → recess_depth=1.3mm → Restwand=1.2mm = 3 Perimeter bei 0.4mm Nozzle
+    # (war 1.5mm Tiefe → 1.0mm Restwand = 2.5 Perimeter, nicht sauber teilbar)
+    recess_depth = f.cm(1.3)
     recess_x0    = f.cm(4.0)
     recess_x1    = f.cm(45.0)
     recess_y0    = f.cm(1.0)
