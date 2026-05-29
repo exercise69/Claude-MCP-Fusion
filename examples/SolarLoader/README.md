@@ -23,7 +23,8 @@ Total PCB stack: approx. 52 × 23 × 32 mm (X × Y × Z).
 
 | File | Description |
 |------|-------------|
-| `fusion_unterschale.py` | Bottom shell — display face, USB-C, SD slot, standoffs, snap-fit lip |
+| `fusion_unterschale.py` | Bottom shell v1 — flat display face |
+| `fusion_unterschale_v2.py` | Bottom shell v2 — recessed display area (Adafruit-style, recommended) |
 | `fusion_oberschale.py` | Top shell — RS485 cable exit, M4 mounting holes |
 | `SolarLoaderCase.scad` | Original OpenSCAD prototype (same geometry, for reference / comparison) |
 
@@ -44,14 +45,16 @@ Hardware stack (Adafruit Feather):
 
 ## Features
 
-**Bottom shell:**
-- Display window: 25.5 × 15.4 mm (centred on TFT glass)
-- USB-C slot in left wall: 10 × 6.3 mm
+**Bottom shell (v2 — recommended):**
+- Recessed display area (Adafruit-style): 41 × 21 mm, 1.5 mm deep → 1 mm remaining wall
+  - Covers display module, D0/D1/D2 buttons (X=7.6 mm) and Reset (X=44.5 mm)
+- TFT opening: 25.5 × 15.4 mm full cutout (centred on TFT glass at X=26.26, Y=11.35)
+- USB-C slot in left wall: 10 × 4.5 mm (Z=0..4.5 mm)
 - SD card slot in right wall: 14.5 × 4.7 mm
-- 3× D0/D1/D2 button pin holes + Reset (Ø2.5 mm through display face)
-- 4× standoffs Ø5 mm, h=2.5 mm (PCB mounting)
+- 3× D0/D1/D2 button pin holes + Reset (Ø2.5 mm through 1 mm recess wall)
+- 4× standoffs Ø5 mm, h=2.5 mm (PCB mounting — outside recess area)
 - M2 countersunk screw holes through display face
-- Snap-fit connection lip (4 mm high, 1.5 mm wall, 0.25 mm gap)
+- Snap-fit connection lip (4 mm high, 1.5 mm wall, 0.25 mm gap) + 2 cantilever clips
 
 **Top shell:**
 - RS485 cable exit in right wall: 13 × 9 mm
@@ -62,8 +65,8 @@ Hardware stack (Adafruit Feather):
 Execute in Fusion 360 via MCP bridge:
 
 ```python
-# Run bottom shell
-exec(open('fusion_unterschale.py').read())
+# Run bottom shell (v2 — recessed display)
+exec(open('fusion_unterschale_v2.py').read())
 
 # Run top shell
 exec(open('fusion_oberschale.py').read())
