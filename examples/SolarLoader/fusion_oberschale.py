@@ -66,7 +66,43 @@ def run(_context):
         ix1 + wall + f.cm(0.1), rs485_y1, rs485_z1))
     print("  RS485-Ausgang fertig")
 
-    # 5. Montage-Löcher M4 durch Deckel
+    # 5. Schnapp-Fenster in Innenwände (passend zu Clips der Unterschale)
+    # Maße müssen zu Clips passen: clip_p=0.5mm, clip_w=6mm, clip_h=2mm
+    # Fenster: Breite+0.4mm Spiel, Höhe+0.5mm Spiel, Tiefe = clip_p+lip_gap+0.1mm
+    clip_p    = f.cm(0.5)
+    lip_gap   = f.cm(0.25)
+    clip_w    = f.cm(6.0)
+    clip_h    = f.cm(2.0)
+    clip_z1   = f.cm(22.0) + f.cm(4.0)          # split_z + lip_h = 26mm
+    clip_z0   = clip_z1 - clip_h                 # = 24mm
+    pw        = clip_w + f.cm(0.4)               # Fensterbreite mit Spiel
+    ph        = clip_h + f.cm(0.5)               # Fensterhöhe mit Spiel
+    pd        = clip_p + lip_gap + f.cm(0.1)     # Tiefe = 0.85mm
+
+    cx_lip = (ix0 + ix1) / 2
+    cy_lip = (iy0 + iy1) / 2
+    pz0 = clip_z0 - f.cm(0.1)   # Fenster etwas tiefer starten (Montagespiel)
+    pz1 = pz0 + ph
+
+    # Linke Innenwand
+    f.cut(oc, shell, f.box(oc,
+        ix0 - pd,        cy_lip - pw/2, pz0,
+        ix0 + f.cm(0.1), cy_lip + pw/2, pz1))
+    # Rechte Innenwand
+    f.cut(oc, shell, f.box(oc,
+        ix1 - f.cm(0.1), cy_lip - pw/2, pz0,
+        ix1 + pd,        cy_lip + pw/2, pz1))
+    # Vordere Innenwand
+    f.cut(oc, shell, f.box(oc,
+        cx_lip - pw/2, iy0 - pd,        pz0,
+        cx_lip + pw/2, iy0 + f.cm(0.1), pz1))
+    # Hintere Innenwand
+    f.cut(oc, shell, f.box(oc,
+        cx_lip - pw/2, iy1 - f.cm(0.1), pz0,
+        cx_lip + pw/2, iy1 + pd,        pz1))
+    print("  Schnapp-Fenster fertig")
+
+    # 6. Montage-Löcher M4 durch Deckel
     for mx in mount_xs:
         f.cut(oc, shell, f.cylinder(oc,
             mx, pcb_cy, iz1 - f.cm(0.1), oz1 + f.cm(0.1), mount_d))

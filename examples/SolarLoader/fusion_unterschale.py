@@ -97,8 +97,56 @@ def run(_context):
                           split_z - f.cm(0.1),
                           lx1 - lip_wall, ly1 - lip_wall,
                           split_z + lip_h + f.cm(0.1)))
+    # Schnapp-Clips: 4 Cantilever-Tabs auf der Steckzunge (je eine pro Wand)
+    # Tab-Geometrie: 6mm breit, 2mm Rasthöhe + 1mm Rampe, 0.5mm Überstand
+    clip_w   = f.cm(6.0)   # Breite entlang der Wand
+    clip_h   = f.cm(2.0)   # Höhe des Rastbereichs
+    clip_ramp= f.cm(1.0)   # Höhe der Einführschräge (unterhalb Rastbereich)
+    clip_p   = f.cm(0.5)   # Überstand über Steckzungenaußenfläche
+    clip_ov  = f.cm(0.15)  # Überlappung in Steckzunge für Join
+    clip_z1  = split_z + lip_h                    # = 26mm (Oberkante Tab = Oberkante Zunge)
+    clip_z0  = clip_z1 - clip_h                   # = 24mm (Unterkante Rastbereich)
+    clip_zr  = clip_z0 - clip_ramp                # = 23mm (Unterkante Rampe)
+
+    cx_lip = (lx0 + lx1) / 2   # X-Mitte Steckzunge
+    cy_lip = (ly0 + ly1) / 2   # Y-Mitte Steckzunge
+
+    # Hilfsfunktion: Tab + Rampe erstellen und an lip joinen
+    def add_clip(x0, y0, z0_ramp, x1, y1, z1_lock, ramp_axis, ramp_sign):
+        """Erstellt einen Clip-Tab mit Einführrampe und joiniert ihn an lip."""
+        # Vollquader (Rampe + Rastbereich zusammen)
+        tab = f.box(us, x0, y0, z0_ramp, x1, y1, z1_lock)
+        # Rampe durch Keil-Cut: untere Hälfte der Protrusion wegschneiden
+        ramp_h = clip_ramp
+        if ramp_axis == 'x' and ramp_sign < 0:   # linke Wand, Überstand in -X
+            f.cut(us, tab, f.box(us, x0, y0 - f.cm(0.1), z0_ramp - f.cm(0.1),
+                                      x0 + clip_p * 0.6, y1 + f.cm(0.1), clip_z0 + f.cm(0.1)))
+        elif ramp_axis == 'x' and ramp_sign > 0:  # rechte Wand, Überstand in +X
+            f.cut(us, tab, f.box(us, x1 - clip_p * 0.6, y0 - f.cm(0.1), z0_ramp - f.cm(0.1),
+                                      x1 + f.cm(0.1), y1 + f.cm(0.1), clip_z0 + f.cm(0.1)))
+        elif ramp_axis == 'y' and ramp_sign < 0:  # vordere Wand, Überstand in -Y
+            f.cut(us, tab, f.box(us, x0 - f.cm(0.1), y0, z0_ramp - f.cm(0.1),
+                                      x1 + f.cm(0.1), y0 + clip_p * 0.6, clip_z0 + f.cm(0.1)))
+        elif ramp_axis == 'y' and ramp_sign > 0:  # hintere Wand, Überstand in +Y
+            f.cut(us, tab, f.box(us, x0 - f.cm(0.1), y1 - clip_p * 0.6, z0_ramp - f.cm(0.1),
+                                      x1 + f.cm(0.1), y1 + f.cm(0.1), clip_z0 + f.cm(0.1)))
+        f.join(us, lip, tab)
+
+    # Linke Wand (Überstand in -X)
+    add_clip(lx0 - clip_p,  cy_lip - clip_w/2, clip_zr,
+             lx0 + clip_ov, cy_lip + clip_w/2, clip_z1, 'x', -1)
+    # Rechte Wand (Überstand in +X)
+    add_clip(lx1 - clip_ov, cy_lip - clip_w/2, clip_zr,
+             lx1 + clip_p,  cy_lip + clip_w/2, clip_z1, 'x', +1)
+    # Vordere Wand (Überstand in -Y)
+    add_clip(cx_lip - clip_w/2, ly0 - clip_p,  clip_zr,
+             cx_lip + clip_w/2, ly0 + clip_ov, clip_z1, 'y', -1)
+    # Hintere Wand (Überstand in +Y)
+    add_clip(cx_lip - clip_w/2, ly1 - clip_ov, clip_zr,
+             cx_lip + clip_w/2, ly1 + clip_p,  clip_z1, 'y', +1)
+
     f.join(us, shell, lip)
-    print("  Steckzunge hinzugefügt")
+    print("  Steckzunge + 4 Schnapp-Clips hinzugefügt")
 
     # 6. Display-Fenster
     f.cut(us, shell, f.box(us,
