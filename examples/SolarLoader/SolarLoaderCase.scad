@@ -26,7 +26,7 @@ ix1 = asm_x1 + clearance;   // 51.43
 iy0 = asm_y0 - clearance;   // -0.64
 iy1 = asm_y1 + clearance;   // 23.50
 iz0 = asm_z0 - 0.6;         // -2.54  (Puffer unter Display)
-iz1 = top_z  + 1.0;         // 35.0   (Puffer über Klemme)
+iz1 = top_z  + 10.0;        // 44.0   (10mm Luft über Klemme)
 
 // Außenmaße
 ox0 = ix0 - wall;  // -4.34
@@ -62,7 +62,7 @@ rs485_y0 = 5.0;  rs485_y1 = 18.0;   // 13mm breit
 rs485_z0 = 23.0; rs485_z1 = 32.0;   //  9mm hoch
 
 // --- MONTAGE-LÖCHER im Deckel ---
-mount_xs = [8.0, 46.8];   // X-Positionen M4 Ø4.2mm
+mount_xs = [5.4, 44.2];   // X-Positionen M4 Ø4.2mm — symmetrisch, je 9.7mm vom Rand
 mount_y  = pcb_cy;
 mount_d  = 4.2;
 
