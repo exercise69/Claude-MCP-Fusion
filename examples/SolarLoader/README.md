@@ -23,9 +23,11 @@ Total PCB stack: approx. 52 × 23 × 32 mm (X × Y × Z).
 
 | File | Description |
 |------|-------------|
+| `fusion_unterschale_v3.py` | Bottom shell v3 — **fully parametrised** (33 Fusion User Parameters, recommended) |
+| `fusion_oberschale_v2.py` | Top shell v2 — **fully parametrised** (shares common params with bottom shell) |
+| `fusion_unterschale_v2.py` | Bottom shell v2 — recessed display area, hardcoded values |
 | `fusion_unterschale.py` | Bottom shell v1 — flat display face |
-| `fusion_unterschale_v2.py` | Bottom shell v2 — recessed display area (Adafruit-style, recommended) |
-| `fusion_oberschale.py` | Top shell — RS485 cable exit, M4 mounting holes |
+| `fusion_oberschale.py` | Top shell v1 — hardcoded values |
 | `SolarLoaderCase.scad` | Original OpenSCAD prototype (same geometry, for reference / comparison) |
 
 ## Enclosure Geometry
@@ -45,31 +47,50 @@ Hardware stack (Adafruit Feather):
 
 ## Features
 
-**Bottom shell (v2 — recommended):**
-- Recessed display area (Adafruit-style): 41 × 21 mm, 1.5 mm deep → 1 mm remaining wall
+**Bottom shell v3 (recommended — fully parametrised):**
+- All 25 design knobs registered as Fusion User Parameters (Modify → Change Parameters)
+- Recessed display area (Adafruit-style): 41 × 21 mm, 1.3 mm deep → 1.2 mm remaining wall (3 perimeters @ 0.4 mm nozzle)
   - Covers display module, D0/D1/D2 buttons (X=7.6 mm) and Reset (X=44.5 mm)
 - TFT opening: 25.5 × 15.4 mm full cutout (centred on TFT glass at X=26.26, Y=11.35)
 - USB-C slot in left wall: 10 × 4.5 mm (Z=0..4.5 mm)
 - SD card slot in right wall: 14.5 × 4.7 mm
-- 3× D0/D1/D2 button pin holes + Reset (Ø2.5 mm through 1 mm recess wall)
-- 4× standoffs Ø5 mm, h=2.5 mm (PCB mounting — outside recess area)
+- 3× D0/D1/D2 button pin holes + Reset (Ø2.5 mm through recess wall)
+- 4× standoffs Ø5 mm, h=2.5 mm (PCB mounting)
 - M2 countersunk screw holes through display face
-- Snap-fit connection lip (4 mm high, 1.5 mm wall, 0.25 mm gap) + 2 cantilever clips
+- Snap-fit connection lip (4 mm high, 1.6 mm wall, 0.25 mm gap) + 2 cantilever clips
+- `lipo_h` parameter prepared for future LiPo battery add-on (0 mm = no LiPo)
 
-**Top shell:**
+**Top shell v2 (recommended — fully parametrised):**
+- 8 shell-specific Fusion User Parameters + shares common params with bottom shell
 - RS485 cable exit in right wall: 13 × 9 mm
+- 2 snap-fit windows matching bottom shell clips
 - 2× M4 mounting holes (Ø4.2 mm) through lid
+
+## Fusion User Parameters
+
+All parameters visible in **Modify → Change Parameters**. Common parameters are shared between both shell scripts:
+
+| Group | Parameters |
+|-------|-----------|
+| Shell | `wall`, `clearance`, `fillet_r`, `split_z`, `lipo_h` |
+| Snap-fit | `lip_h`, `lip_wall`, `lip_gap`, `clip_w`, `clip_h`, `clip_ramp`, `clip_p` |
+| Display recess | `recess_d` |
+| USB-C | `usbc_half`, `usbc_z1` |
+| Buttons | `btn_d` |
+| SD card | `sd_y0`, `sd_y1`, `sd_z0`, `sd_z1` |
+| Standoffs | `so_od`, `so_h`, `screw_d`, `csk_d`, `csk_dep` |
+| Top shell | `os_clear`, `rs485_y0`, `rs485_y1`, `rs485_z0`, `rs485_z1`, `mount_d`, `mount_x0`, `mount_x1` |
 
 ## How to Run
 
-Execute in Fusion 360 via MCP bridge:
+Execute in Fusion 360 via MCP bridge (run bottom shell first, then top):
 
 ```python
-# Run bottom shell (v2 — recessed display)
-exec(open('fusion_unterschale_v2.py').read())
+# Bottom shell v3 — parametrised (recommended)
+exec(open('fusion_unterschale_v3.py').read()); run(None)
 
-# Run top shell
-exec(open('fusion_oberschale.py').read())
+# Top shell v2 — parametrised (recommended)
+exec(open('fusion_oberschale_v2.py').read()); run(None)
 ```
 
 Or trigger via Claude using the MCP `fusion_mcp_execute` tool.
