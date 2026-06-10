@@ -207,4 +207,20 @@ Scripts:
 
 ## License
 
-MIT — use freely, no attribution required.
+Licensed under the **MIT License** — see [LICENSE](LICENSE). You may use, modify,
+and redistribute this code freely, including commercially. The only condition is
+that you keep the copyright and license notice in copies (MIT requires retaining
+attribution, despite being otherwise unrestricted).
+
+## Trademarks & Disclaimer
+
+This is an independent, unofficial project. It is **not affiliated with, endorsed
+by, or sponsored by Autodesk, Inc. or Anthropic**. "Autodesk" and "Fusion 360" are
+trademarks of Autodesk, Inc.; "Claude" is a trademark of Anthropic, PBC — used here
+only descriptively to indicate compatibility.
+
+The scripts call the Autodesk® Fusion™ Python API at runtime; **no Autodesk software
+is redistributed** in this repository. The software is provided **"as is", without
+any warranty** — always verify generated geometry before fabricating, machining, or
+otherwise relying on it. Your use of Autodesk Fusion remains subject to its own
+applicable license terms.
