@@ -1,10 +1,10 @@
 """
 f360_helpers.py — Wiederverwendbare Hilfsfunktionen für Fusion 360 Python-Scripts
-Ablageort: /path/to/Fusion360Scripts/
+Ablageort: Wurzel des Fusion360Scripts-Repos.
 
-Verwendung am Anfang jedes Scripts:
+Verwendung am Anfang jedes Scripts (Pfad nicht hardwiren — siehe README "Quick Start"):
     import sys
-    sys.path.append('/path/to/Fusion360Scripts')
+    sys.path.append('/pfad/zu/Fusion360Scripts')   # oder via ~/.fusion360scripts_path
     import f360_helpers as f
 
     app  = adsk.core.Application.get()

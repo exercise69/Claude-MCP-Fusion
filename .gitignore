@@ -5,3 +5,7 @@ __pycache__/
 
 # macOS
 .DS_Store
+
+# Lokale Pfad-/Config-Dateien (privat, nie committen)
+.fusion360scripts_path
+local_config.py

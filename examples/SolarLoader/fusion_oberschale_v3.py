@@ -15,8 +15,29 @@ Geometrie der Eck-Nut:
   ni = lip_gap + 0.10mm           → Tiefe in den Hohlraum
   lead-in: 0.4mm breitere Öffnung am Eingang (Z = lip_tip)
 """
-import sys
-sys.path.append('/path/to/Fusion360Scripts')
+import os, sys
+
+def _f360_root():
+    """Wurzel des Fusion360Scripts-Repos finden (kein hardwired Pfad)."""
+    _cfg = os.path.expanduser('~/.fusion360scripts_path')
+    if os.path.exists(_cfg) and open(_cfg).read().strip():
+        return open(_cfg).read().strip()
+    if os.environ.get('FUSION360SCRIPTS'):
+        return os.environ['FUSION360SCRIPTS']
+    try:
+        _d = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        return os.getcwd()
+    for _ in range(6):
+        if os.path.exists(os.path.join(_d, 'f360_helpers.py')):
+            return _d
+        _d = os.path.dirname(_d)
+    return os.getcwd()
+
+_root = _f360_root()
+for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
+    if _p not in sys.path:
+        sys.path.append(_p)
 import f360_helpers as f
 import adsk.core, adsk.fusion
 

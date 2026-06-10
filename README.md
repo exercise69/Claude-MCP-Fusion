@@ -20,12 +20,49 @@ tedious parts of the API and document the gotchas we discovered along the way.
 
 ## Quick Start
 
-Copy `f360_helpers.py` to a folder on your machine, then import it at the top of any
-Fusion 360 Python script:
+Clone the repo somewhere on your machine. So the scripts can locate `f360_helpers.py`
+**without a hard-coded personal path**, point them at the repo root in one of three ways
+(checked in this order):
+
+1. **Path file** *(recommended)* — create `~/.fusion360scripts_path` containing one line
+   with the absolute repo path:
+   ```
+   /path/to/Claude-MCP-Fusion
+   ```
+   This file lives outside the repo, so your username never ends up in committed code.
+2. **Environment variable** — set `FUSION360SCRIPTS` to the repo root.
+3. **Auto-detect** — if neither is set, the scripts walk up from their own location
+   (`__file__`) looking for `f360_helpers.py`. Works for normal Fusion script runs, but
+   not when a script is run via `exec(open(...).read())` (no `__file__`), which is why the
+   path file is recommended.
+
+The example scripts use this self-contained bootstrap at the top — copy it into your own
+scripts:
 
 ```python
-import sys
-sys.path.append('/path/to/Claude-MCP-Fusion')
+import os, sys
+
+def _f360_root():
+    _cfg = os.path.expanduser('~/.fusion360scripts_path')
+    if os.path.exists(_cfg) and open(_cfg).read().strip():
+        return open(_cfg).read().strip()
+    if os.environ.get('FUSION360SCRIPTS'):
+        return os.environ['FUSION360SCRIPTS']
+    try:
+        _d = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        return os.getcwd()
+    for _ in range(6):
+        if os.path.exists(os.path.join(_d, 'f360_helpers.py')):
+            return _d
+        _d = os.path.dirname(_d)
+    return os.getcwd()
+
+_root = _f360_root()
+for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
+    if _p not in sys.path:
+        sys.path.append(_p)
+
 import f360_helpers as f
 
 def run(_context):

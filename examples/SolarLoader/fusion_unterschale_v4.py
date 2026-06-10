@@ -26,11 +26,27 @@ Konstruktions-Strategie:
   4. Lip innen aushöhlen + RS485-Aussparung
   5. Spiess-Lips als separate Bodies erzeugen (kein Join)
 """
-import sys
+import os, sys
 
-_PATHS = ('/path/to/Fusion360Scripts',
-          '/path/to/Fusion360Scripts/examples/SolarLoader')
-for _p in _PATHS:
+def _f360_root():
+    """Wurzel des Fusion360Scripts-Repos finden (kein hardwired Pfad)."""
+    _cfg = os.path.expanduser('~/.fusion360scripts_path')
+    if os.path.exists(_cfg) and open(_cfg).read().strip():
+        return open(_cfg).read().strip()
+    if os.environ.get('FUSION360SCRIPTS'):
+        return os.environ['FUSION360SCRIPTS']
+    try:
+        _d = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        return os.getcwd()
+    for _ in range(6):
+        if os.path.exists(os.path.join(_d, 'f360_helpers.py')):
+            return _d
+        _d = os.path.dirname(_d)
+    return os.getcwd()
+
+_root = _f360_root()
+for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
     if _p not in sys.path:
         sys.path.append(_p)
 for _m in ('f360_helpers', 'solarloader_common'):
