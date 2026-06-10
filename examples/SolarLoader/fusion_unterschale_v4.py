@@ -75,6 +75,13 @@ def _build():
     f.set_param(des, 'screw_d',     2.2,  'M2-Durchgangsloch mm',             ow)
     f.set_param(des, 'csk_d',       4.0,  'M2-Senkkopf Durchmesser mm',       ow)
     f.set_param(des, 'csk_dep',     1.5,  'M2-Senkkopf Tiefe mm',             ow)
+    # Flex-Taster (Living-Hinge) D0/D1/D2
+    f.set_param(des, 'fb_pad',      5.0,  'Flex-Taster Pad-Kantenlaenge mm',  ow)
+    f.set_param(des, 'fb_slot',     0.6,  'Flex-Taster Schlitzbreite mm',     ow)
+    f.set_param(des, 'fb_hinge',    0.6,  'Flex-Taster Scharnier-Restwand mm', ow)
+    f.set_param(des, 'fb_hinge_w',  1.5,  'Flex-Taster Scharnier-Nutbreite mm', ow)
+    f.set_param(des, 'fb_nub_d',    2.0,  'Flex-Taster Drucknocken Durchm. mm', ow)
+    f.set_param(des, 'fb_nub_gap',  0.15, 'Flex-Taster Ruheluft zum Taster mm', ow)
 
     # ── 2. PARAMETER EINLESEN ────────────────────────────────────────────
     wall        = f.get_param_cm(des, 'wall')
@@ -106,6 +113,12 @@ def _build():
     screw_d     = f.get_param_cm(des, 'screw_d')
     csk_d       = f.get_param_cm(des, 'csk_d')
     csk_dep     = f.get_param_cm(des, 'csk_dep')
+    fb_pad      = f.get_param_cm(des, 'fb_pad')
+    fb_slot     = f.get_param_cm(des, 'fb_slot')
+    fb_hinge    = f.get_param_cm(des, 'fb_hinge')
+    fb_hinge_w  = f.get_param_cm(des, 'fb_hinge_w')
+    fb_nub_d    = f.get_param_cm(des, 'fb_nub_d')
+    fb_nub_gap  = f.get_param_cm(des, 'fb_nub_gap')
     rs485_y0    = f.get_param_cm(des, 'rs485_y0')
     rs485_y1    = f.get_param_cm(des, 'rs485_y1')
 
@@ -264,13 +277,41 @@ def _build():
         ix0 + f.cm(4.0), usbc_y1, usbc_z1))
     print('  USB-C-Schlitz')
 
-    # 10. Taster-Stiftlöcher D0/D1/D2 + Reset
+    # 10. Flex-Taster D0/D1/D2 (Living-Hinge) + Reset als Pinhole
+    #     Pad in der Display-Mulden-Restwand, 3-seitig durch die Wand
+    #     freigeschnitten; Scharnier-Steg bleibt auf der -X-Seite stehen und
+    #     wird von innen auf fb_hinge ausgedünnt (Außenfläche bleibt glatt).
+    #     Der Innen-Nocken überbrückt den ~1.94mm-Luftspalt bis kurz vor die
+    #     gemessene Taster-Oberkante (-1.90mm), fb_nub_gap Ruheluft.
+    recess_inner = iz0 - recess_d          # Pad-Innenfläche (Restwand innen)
+    btn_top_z    = f.cm(-1.90)             # gemessene Taster-Oberkante (display-seitig)
+    nub_tip_z    = btn_top_z - fb_nub_gap  # Nocken-Spitze
+    hp = fb_pad / 2.0
     for by in btn_ys:
-        f.cut(us, shell, f.cylinder(us,
-            btn_x, by, oz0 - e, oz0 + wall + e, btn_d))
+        sz0, sz1 = oz0 - e, recess_inner + e
+        # U-Schlitz, rechte Seite (+X)
+        f.cut(us, shell, f.box(us,
+            btn_x + hp,           by - hp - fb_slot, sz0,
+            btn_x + hp + fb_slot, by + hp + fb_slot, sz1))
+        # oben (+Y)
+        f.cut(us, shell, f.box(us,
+            btn_x - hp, by + hp,           sz0,
+            btn_x + hp, by + hp + fb_slot, sz1))
+        # unten (−Y)
+        f.cut(us, shell, f.box(us,
+            btn_x - hp, by - hp - fb_slot, sz0,
+            btn_x + hp, by - hp,           sz1))
+        # Scharnier-Nut: Verbindungssteg (-X) von innen auf fb_hinge ausdünnen
+        f.cut(us, shell, f.box(us,
+            btn_x - hp - fb_hinge_w/2.0, by - hp, oz0 + fb_hinge,
+            btn_x - hp + fb_hinge_w/2.0, by + hp, recess_inner + e))
+        # Druck-Nocken auf der Pad-Innenseite
+        f.join(us, shell, f.cylinder(us,
+            btn_x, by, recess_inner - e, nub_tip_z, fb_nub_d))
+    # Reset bleibt Pinhole (Ø btn_d)
     f.cut(us, shell, f.cylinder(us,
         rst_x, rst_y, oz0 - e, oz0 + wall + e, btn_d))
-    print('  Taster-Stiftlöcher (D0/D1/D2 + Reset)')
+    print('  Flex-Taster D0/D1/D2 (Living-Hinge) + Reset-Pinhole')
 
     # 11. SD-Karten-Schlitz
     f.cut(us, shell, f.box(us,

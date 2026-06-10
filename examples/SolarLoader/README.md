@@ -67,9 +67,17 @@ The v4 pair replaces the v3 cantilever clips with a **Spiess-style snap lip/notc
 - **RS485 cutout:** the right tongue wall is interrupted over the RS485 terminal
   (`rs485_y0`..`rs485_y1`, 5..18 mm) so the perimeter rim doesn't clash with the screw
   terminal.
+- **Flex buttons (living-hinge):** D0/D1/D2 are no longer pin-holes but finger-pressable
+  **living-hinge pads**. Each `fb_pad` (5 mm) square is cut free on three sides
+  (`fb_slot` = 0.6 mm) through the 1.2 mm recess wall; the hinge strip on the −X side is
+  thinned from the inside to `fb_hinge` (0.6 mm) so the **outer face stays flush**. A
+  Ø`fb_nub_d` (2 mm) nub on the pad's inner side bridges the measured 1.94 mm air gap to
+  the tactile switch top (−1.90 mm), stopping `fb_nub_gap` (0.15 mm) short at rest.
+  **Reset stays a Ø`btn_d` pin-hole** (avoids accidental resets). Switch-top Z was
+  measured from the real Feather model (`BTN_RKB2`).
 
-Everything else (display recess, TFT window, USB-C/SD slots, button pin holes,
-standoffs, M2 screws, M4 lid mounts) carries over from v3/v2.
+Everything else (display recess, TFT window, USB-C/SD slots, standoffs, M2 screws,
+M4 lid mounts) carries over from v3/v2.
 
 **Bottom shell v3 (fully parametrised, cantilever clips):**
 - All 25 design knobs registered as Fusion User Parameters (Modify → Change Parameters)
@@ -102,7 +110,8 @@ All parameters visible in **Modify → Change Parameters**. Common parameters ar
 | Snap-fit (v3) | `lip_h`, `lip_wall`, `lip_gap`, `clip_w`, `clip_h`, `clip_ramp`, `clip_p` |
 | Display recess | `recess_d` |
 | USB-C | `usbc_half`, `usbc_z0`, `usbc_z1` |
-| Buttons | `btn_d` |
+| Buttons | `btn_d` (Reset pin-hole) |
+| Flex buttons (v4) | `fb_pad`, `fb_slot`, `fb_hinge`, `fb_hinge_w`, `fb_nub_d`, `fb_nub_gap` |
 | SD card | `sd_y0`, `sd_y1`, `sd_z0`, `sd_z1` |
 | RS485 | `rs485_y0`, `rs485_y1`, `rs485_z0`, `rs485_z1` |
 
