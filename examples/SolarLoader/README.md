@@ -101,7 +101,7 @@ All parameters visible in **Modify → Change Parameters**. Common parameters ar
 | Notch fit (v4 top) | `notch_extra_d`, `notch_play`, `notch_z_play`, `notch_x_play` |
 | Snap-fit (v3) | `lip_h`, `lip_wall`, `lip_gap`, `clip_w`, `clip_h`, `clip_ramp`, `clip_p` |
 | Display recess | `recess_d` |
-| USB-C | `usbc_half`, `usbc_z1` |
+| USB-C | `usbc_half`, `usbc_z0`, `usbc_z1` |
 | Buttons | `btn_d` |
 | SD card | `sd_y0`, `sd_y1`, `sd_z0`, `sd_z1` |
 | RS485 | `rs485_y0`, `rs485_y1`, `rs485_z0`, `rs485_z1` |

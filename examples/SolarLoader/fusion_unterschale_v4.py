@@ -63,7 +63,8 @@ def _build():
     f.set_param(des, 'lip_wall',    1.6,  'Wandstaerke Steckzunge mm',        ow)
     f.set_param(des, 'recess_d',    1.3,  'Tiefe Display-Mulde von innen mm', ow)
     f.set_param(des, 'usbc_half',   5.0,  'USB-C Schlitz Halbbreite mm',      ow)
-    f.set_param(des, 'usbc_z1',     4.5,  'USB-C Schlitz Z-Oberkante mm',     ow)
+    f.set_param(des, 'usbc_z0',     1.2,  'USB-C Schlitz Z-Unterkante mm',    ow)
+    f.set_param(des, 'usbc_z1',     5.2,  'USB-C Schlitz Z-Oberkante mm',     ow)
     f.set_param(des, 'btn_d',       2.5,  'Taster-Stiftloch Durchmesser mm',  ow)
     f.set_param(des, 'sd_y0',       3.0,  'SD-Schlitz Y-Unterkante mm',       ow)
     f.set_param(des, 'sd_y1',      17.5,  'SD-Schlitz Y-Oberkante mm',        ow)
@@ -93,6 +94,7 @@ def _build():
 
     recess_d    = f.get_param_cm(des, 'recess_d')
     usbc_half   = f.get_param_cm(des, 'usbc_half')
+    usbc_z0     = f.get_param_cm(des, 'usbc_z0')
     usbc_z1     = f.get_param_cm(des, 'usbc_z1')
     btn_d       = f.get_param_cm(des, 'btn_d')
     sd_y0       = f.get_param_cm(des, 'sd_y0')
@@ -256,9 +258,9 @@ def _build():
         disp_cx + disp_w/2, disp_cy + disp_h/2, oz0 + wall + e))
     print('  TFT-Fenster')
 
-    # 9. USB-C-Schlitz
+    # 9. USB-C-Schlitz  (Z auf echte Stecker-Öffnung 3.17mm zentriert, ~0.4mm Luft rundum)
     f.cut(us, shell, f.box(us,
-        ox0 - e, usbc_y0, f.cm(0.0),
+        ox0 - e, usbc_y0, usbc_z0,
         ix0 + f.cm(4.0), usbc_y1, usbc_z1))
     print('  USB-C-Schlitz')
 
