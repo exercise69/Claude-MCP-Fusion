@@ -48,6 +48,19 @@ def zplane(comp, z_cm):
     return comp.constructionPlanes.add(pi)
 
 
+def xplane(comp, x_cm):
+    """
+    Konstruktionsebene parallel zur YZ-Ebene bei x_cm (in cm).
+    Bei x=0 wird die Standard-YZ-Ebene zurückgegeben (kein neues Feature).
+    """
+    if abs(x_cm) < 1e-8:
+        return comp.yZConstructionPlane
+    pi = comp.constructionPlanes.createInput()
+    pi.setByOffset(comp.yZConstructionPlane,
+                   adsk.core.ValueInput.createByReal(x_cm))
+    return comp.constructionPlanes.add(pi)
+
+
 # ─────────────────────────────────────────────────────────────
 # GRUNDKÖRPER (geben immer einen neuen BRepBody zurück)
 # ─────────────────────────────────────────────────────────────
@@ -82,6 +95,43 @@ def cylinder(comp, cx, cy, z0, z1, diameter):
         adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
     ei.setDistanceExtent(False,
         adsk.core.ValueInput.createByReal(z1 - z0))
+    return comp.features.extrudeFeatures.add(ei).bodies.item(0)
+
+
+def triangle_prism_x(comp, x0, x1, y0, z0, y1, z1, y2, z2):
+    """
+    Erstellt ein dreieckiges Prisma, extrudiert in +X-Richtung.
+
+    Dreieck-Ecken im YZ-Querschnitt (alle Koordinaten in cm):
+        Ecke 1: (y0, z0)
+        Ecke 2: (y1, z1)
+        Ecke 3: (y2, z2)
+    x0..x1: X-Ausdehnung des Prismas in cm.
+
+    Typischer Anwendungsfall: Spiess-Stil Schnapp-Leiste (Knob) mit
+    dreieckigem Querschnitt entlang der langen Lip-Seite.
+
+    Beispiel — Knob auf vorderer Seite (Überstand nach -Y):
+        f.triangle_prism_x(comp,
+            lx0 + margin, lx1 - margin,   # X: fast volle Lip-Breite
+            ly0,          snap_z0,          # Ecke 1: Basiswand unten
+            ly0,          snap_z1,          # Ecke 2: Basiswand oben
+            ly0 - snap_d, snap_z1)          # Ecke 3: Außenspitze oben
+    """
+    sk = comp.sketches.add(xplane(comp, x0))
+    lines = sk.sketchCurves.sketchLines
+    # YZ-Ebene in Fusion (Solar Loader): sketch-X = -world-Z, sketch-Y = world-Y
+    p0 = adsk.core.Point3D.create(-z0, y0, 0)
+    p1 = adsk.core.Point3D.create(-z1, y1, 0)
+    p2 = adsk.core.Point3D.create(-z2, y2, 0)
+    lines.addByTwoPoints(p0, p1)
+    lines.addByTwoPoints(p1, p2)
+    lines.addByTwoPoints(p2, p0)
+    ei = comp.features.extrudeFeatures.createInput(
+        sk.profiles.item(0),
+        adsk.fusion.FeatureOperations.NewBodyFeatureOperation)
+    ei.setDistanceExtent(False,
+        adsk.core.ValueInput.createByReal(x1 - x0))
     return comp.features.extrudeFeatures.add(ei).bodies.item(0)
 
 
@@ -298,24 +348,31 @@ def hide(root, name):
 # USER-PARAMETER
 # ─────────────────────────────────────────────────────────────
 
-def set_param(des, name, value_mm, comment=''):
+def set_param(des, name, value_mm, comment='', overwrite=True):
     """
     Legt einen User-Parameter an oder aktualisiert ihn.
     value_mm: Wert in Millimeter.
+
+    overwrite=True  (Default, rückwärtskompatibel): vorhandenen Wert
+                    auf value_mm zurücksetzen.
+    overwrite=False (create-if-missing): vorhandenen Wert UNANGETASTET
+                    lassen — so überleben manuelle Änderungen in Fusion
+                    (Modify → Change Parameters) einen Rebuild.
+
     Gibt das UserParameter-Objekt zurück.
 
     Beispiel:
-        set_param(des, 'wall', 2.5, 'Wandstärke mm')
-        set_param(des, 'clearance', 0.6)
+        set_param(des, 'wall', 2.5, 'Wandstärke mm')            # setzt/überschreibt
+        set_param(des, 'wall', 2.5, 'Wandstärke mm', False)     # nur anlegen
     """
     params = des.userParameters
     p = params.itemByName(name)
-    val = adsk.core.ValueInput.createByString(f'{value_mm} mm')
     if p:
-        p.expression = f'{value_mm} mm'
+        if overwrite:
+            p.expression = f'{value_mm} mm'
         return p
-    else:
-        return params.add(name, val, 'mm', comment)
+    val = adsk.core.ValueInput.createByString(f'{value_mm} mm')
+    return params.add(name, val, 'mm', comment)
 
 
 def get_param_mm(des, name):

@@ -23,8 +23,11 @@ Total PCB stack: approx. 52 × 23 × 32 mm (X × Y × Z).
 
 | File | Description |
 |------|-------------|
-| `fusion_unterschale_v3.py` | Bottom shell v3 — **fully parametrised** (33 Fusion User Parameters, recommended) |
-| `fusion_oberschale_v2.py` | Top shell v2 — **fully parametrised** (shares common params with bottom shell) |
+| `fusion_unterschale_v4.py` | Bottom shell v4 — **Spiess-style snap lip** (triangular ridge, recommended) |
+| `fusion_oberschale_v4.py` | Top shell v4 — **matching notch grooves** for the v4 lip (recommended) |
+| `solarloader_common.py` | Shared hardware constants + common user parameters (imported by both v4 scripts) |
+| `fusion_unterschale_v3.py` | Bottom shell v3 — fully parametrised, cantilever-clip snap |
+| `fusion_oberschale_v2.py` | Top shell v2 — fully parametrised (shares common params with bottom shell) |
 | `fusion_unterschale_v2.py` | Bottom shell v2 — recessed display area, hardcoded values |
 | `fusion_unterschale.py` | Bottom shell v1 — flat display face |
 | `fusion_oberschale.py` | Top shell v1 — hardcoded values |
@@ -47,7 +50,28 @@ Hardware stack (Adafruit Feather):
 
 ## Features
 
-**Bottom shell v3 (recommended — fully parametrised):**
+**v4 — Spiess-style snap connection (recommended):**
+
+The v4 pair replaces the v3 cantilever clips with a **Spiess-style snap lip/notch**:
+
+- **Lip (male, on the bottom shell tongue):** a continuous triangular-cross-section
+  ridge running along both long Y-sides of the Steckzunge. The lead-in **ramp is on
+  top** (eases insertion as the top shell descends), the flat **lock face is on the
+  bottom** (catches the notch floor on pull-up).
+  - `snap_d` = 0.8 mm overhang, `snap_h` = 1.2 mm lock height, `snap_margin` = 3.0 mm
+    end inset, `snap_top` = 2.0 mm lip-end overhang above the lock face
+  - `Lip_front` / `Lip_back` are **separate bodies** (can be repositioned/rotated
+    individually in Fusion, then joined via Modify → Combine)
+- **Notch (female, in the top shell inner long walls):** matching rectangular grooves
+  sized for the lip + `lip_gap` tolerance.
+- **RS485 cutout:** the right tongue wall is interrupted over the RS485 terminal
+  (`rs485_y0`..`rs485_y1`, 5..18 mm) so the perimeter rim doesn't clash with the screw
+  terminal.
+
+Everything else (display recess, TFT window, USB-C/SD slots, button pin holes,
+standoffs, M2 screws, M4 lid mounts) carries over from v3/v2.
+
+**Bottom shell v3 (fully parametrised, cantilever clips):**
 - All 25 design knobs registered as Fusion User Parameters (Modify → Change Parameters)
 - Recessed display area (Adafruit-style): 41 × 21 mm, 1.3 mm deep → 1.2 mm remaining wall (3 perimeters @ 0.4 mm nozzle)
   - Covers display module, D0/D1/D2 buttons (X=7.6 mm) and Reset (X=44.5 mm)
@@ -73,11 +97,22 @@ All parameters visible in **Modify → Change Parameters**. Common parameters ar
 | Group | Parameters |
 |-------|-----------|
 | Shell | `wall`, `clearance`, `fillet_r`, `split_z`, `lipo_h` |
-| Snap-fit | `lip_h`, `lip_wall`, `lip_gap`, `clip_w`, `clip_h`, `clip_ramp`, `clip_p` |
+| Snap-fit (v4) | `lip_h`, `lip_wall`, `lip_gap`, `snap_d`, `snap_h`, `snap_margin`, `snap_top` |
+| Notch fit (v4 top) | `notch_extra_d`, `notch_play`, `notch_z_play`, `notch_x_play` |
+| Snap-fit (v3) | `lip_h`, `lip_wall`, `lip_gap`, `clip_w`, `clip_h`, `clip_ramp`, `clip_p` |
 | Display recess | `recess_d` |
 | USB-C | `usbc_half`, `usbc_z1` |
 | Buttons | `btn_d` |
 | SD card | `sd_y0`, `sd_y1`, `sd_z0`, `sd_z1` |
+| RS485 | `rs485_y0`, `rs485_y1`, `rs485_z0`, `rs485_z1` |
+
+> **v4 parameter behaviour (create-if-missing):** the v4 scripts only *create*
+> parameters that don't exist yet — they no longer overwrite values you've changed
+> in Fusion. So you can tune e.g. `snap_d` or `notch_play` in *Change Parameters*,
+> rebuild, and your value sticks. To reset everything to the code defaults, call
+> `define_common_params(des, overwrite=True)` (or pass `True` to the per-script
+> `set_param` calls). The `notch_*` parameters control snap-fit tightness — increase
+> `notch_play` / `notch_x_play` for a looser fit, decrease for tighter.
 | Standoffs | `so_od`, `so_h`, `screw_d`, `csk_d`, `csk_dep` |
 | Top shell | `os_clear`, `rs485_y0`, `rs485_y1`, `rs485_z0`, `rs485_z1`, `mount_d`, `mount_x0`, `mount_x1` |
 
@@ -86,11 +121,11 @@ All parameters visible in **Modify → Change Parameters**. Common parameters ar
 Execute in Fusion 360 via MCP bridge (run bottom shell first, then top):
 
 ```python
-# Bottom shell v3 — parametrised (recommended)
-exec(open('fusion_unterschale_v3.py').read()); run(None)
+# Bottom shell v4 — Spiess-style lip (recommended)
+exec(open('fusion_unterschale_v4.py').read()); run(None)
 
-# Top shell v2 — parametrised (recommended)
-exec(open('fusion_oberschale_v2.py').read()); run(None)
+# Top shell v4 — matching notch grooves (recommended)
+exec(open('fusion_oberschale_v4.py').read()); run(None)
 ```
 
 Or trigger via Claude using the MCP `fusion_mcp_execute` tool.
