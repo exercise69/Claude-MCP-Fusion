@@ -292,8 +292,8 @@ Scripts:
   battery bay, rounded internal corners
 - `fusion_oberschale_v6.py` — Top shell: RS485 cable exit, M4 mounting holes,
   matching notch grooves, battery retention tab
-- `solarloader_common.py` / `solarloader_v5.py` — shared hardware constants and
-  parametric battery/cavity geometry, imported by both shells
+- `solarloader_common.py` / `solarloader_battery.py` — shared hardware constants
+  and parametric battery/cavity geometry, imported by both shells
 - `SolarLoaderCase.scad` — Original OpenSCAD prototype (early geometry, for reference)
 
 ---

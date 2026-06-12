@@ -1,7 +1,7 @@
 """
 fusion_unterschale_v6.py — Unterschale V6 (Druck-Optimierung) mit Akkufach.
 
-Basiert auf fusion_unterschale_v5.py. Änderungen ggü. V5 (Hinweise Druckerei):
+Druck-optimierte Bodenschale (Merkmale u.a. nach Druckerei-Hinweisen):
   - INNEN-RADIEN an den Ausschnitten (TFT-Fenster, Display-Mulde, USB-C, SD)
     über abgerundete Schnitt-Werkzeuge — scharfe Innenecken sind Sollbruch-
     stellen. Radius = Parameter 'inner_r'.
@@ -11,8 +11,8 @@ Basiert auf fusion_unterschale_v5.py. Änderungen ggü. V5 (Hinweise Druckerei):
     ändern (Mulde bleibt relativ zu iz0). Das Glas sitzt nur 'front_extra'
     geschützt versenkt.
 
-Akku-Geometrie & Schalen-Mating bleiben identisch zu V5
-(solarloader_v5.cavity_xy / batt_extents). V5 bleibt unverändert erhalten.
+Akku-Geometrie & Schalen-Mating kommen aus solarloader_battery
+(cavity_xy / batt_extents), geteilt mit fusion_oberschale_v6.py.
 """
 import os, sys
 
@@ -37,12 +37,12 @@ _root = _f360_root()
 for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
     if _p not in sys.path:
         sys.path.append(_p)
-for _m in ('f360_helpers', 'solarloader_common', 'solarloader_v5'):
+for _m in ('f360_helpers', 'solarloader_common', 'solarloader_battery'):
     if _m in sys.modules:
         del sys.modules[_m]
 import f360_helpers as f
 import solarloader_common as sl
-import solarloader_v5 as sl5
+import solarloader_battery as slb
 import adsk.core, adsk.fusion
 
 
@@ -91,7 +91,7 @@ def _build():
 
     # ── 1. USER-PARAMETER ────────────────────────────────────────────────
     sl.define_common_params(des)          # geteilte Params (create-if-missing)
-    sl5.define_batt_params(des)           # Akku-Params (create-if-missing)
+    slb.define_batt_params(des)           # Akku-Params (create-if-missing)
 
     ow = False                            # overwrite=False für alle Specifics
     f.set_param(des, 'lipo_h',      0.0,  'LiPo-Hoehenaufschlag mm',          ow)
@@ -184,8 +184,8 @@ def _build():
     # ── 4. ABGELEITETE GEOMETRIE (V5: verbreitert + Akkufach) ────────────
     iz0 = pcb_z0 - f.cm(0.6)
 
-    # XY-Innenraum jetzt aus solarloader_v5 (geteilt mit Oberschale)
-    ix0, ix1, iy0, iy1 = sl5.cavity_xy(des)
+    # XY-Innenraum jetzt aus solarloader_battery (geteilt mit Oberschale)
+    ix0, ix1, iy0, iy1 = slb.cavity_xy(des)
 
     ox0, ox1 = ix0 - wall, ix1 + wall
     oy0, oy1 = iy0 - wall, iy1 + wall

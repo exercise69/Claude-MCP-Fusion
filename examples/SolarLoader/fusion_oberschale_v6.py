@@ -31,12 +31,12 @@ _root = _f360_root()
 for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
     if _p not in sys.path:
         sys.path.append(_p)
-for _m in ('f360_helpers', 'solarloader_common', 'solarloader_v5'):
+for _m in ('f360_helpers', 'solarloader_common', 'solarloader_battery'):
     if _m in sys.modules:
         del sys.modules[_m]
 import f360_helpers as f
 import solarloader_common as sl
-import solarloader_v5 as sl5
+import solarloader_battery as slb
 import adsk.core, adsk.fusion
 
 
@@ -84,7 +84,7 @@ def _build():
 
     # ── 1. USER-PARAMETER ────────────────────────────────────────────────
     sl.define_common_params(des)
-    sl5.define_batt_params(des)
+    slb.define_batt_params(des)
 
     ow = False
     f.set_param(des, 'os_clear',  10.0,  'Luft ueber hoeherem Bauteil mm',     ow)
@@ -140,15 +140,15 @@ def _build():
     e = f.cm(0.1)
 
     # ── 4. ABGELEITETE GEOMETRIE (V5: verbreitert + Akkufach + tiefer) ───
-    ix0, ix1, iy0, iy1 = sl5.cavity_xy(des)
-    iz1 = sl5.wall_iz1(des)               # Tiefe Richtung Wand (Akku-Rückseite)
+    ix0, ix1, iy0, iy1 = slb.cavity_xy(des)
+    iz1 = slb.wall_iz1(des)               # Tiefe Richtung Wand (Akku-Rückseite)
 
     ox0, ox1 = ix0 - wall, ix1 + wall
     oy0, oy1 = iy0 - wall, iy1 + wall
     oz1 = iz1 + wall
 
     # Akku-Extents (für Lasche)
-    bx0, bx1, by0, by1, bz0, bz1 = sl5.batt_extents(des)
+    bx0, bx1, by0, by1, bz0, bz1 = slb.batt_extents(des)
 
     # Notch-Geometrie
     nd  = snap_d - lip_gap + notch_extra_d

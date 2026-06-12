@@ -33,7 +33,7 @@ Total PCB stack: approx. 52 × 23 × 32 mm (X × Y × Z).
 | `fusion_unterschale_v6.py` | **Bottom shell (current)** — Spiess-style snap lip, display window, USB-C & SD slots, living-hinge flex buttons, M2 board screws, Li-ion battery bay, rounded internal corners, thicker display bezel |
 | `fusion_oberschale_v6.py` | **Top shell (current)** — matching notch grooves, RS485 cable exit, M4 mounting holes, battery retention tab |
 | `solarloader_common.py` | Shared hardware constants + common user parameters (imported by both shells) |
-| `solarloader_v5.py` | Shared parametric battery / inner-cavity geometry (imported by both shells; the name is just the module's origin version) |
+| `solarloader_battery.py` | Shared parametric battery / inner-cavity geometry (imported by both shells) |
 | `SolarLoaderCase.scad` | Original OpenSCAD prototype (early geometry, for reference / comparison) |
 
 The two shells derive all geometry from a shared parametric core, so changing one

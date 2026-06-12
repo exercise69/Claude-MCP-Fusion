@@ -1,13 +1,14 @@
 """
-solarloader_v5.py — Akku-Erweiterung (V5) für SolarLoader.
+solarloader_battery.py — geteiltes Akku-/Innenraum-Modul für SolarLoader.
 
-Wird von fusion_unterschale_v5.py UND fusion_oberschale_v5.py importiert.
+Wird von fusion_unterschale_v6.py UND fusion_oberschale_v6.py importiert, damit
+beide Schalen exakt dieselbe Akku- und Innenraum-Geometrie verwenden und
+mating-kompatibel bleiben.
 
-V5 fügt unter dem PCB-Stack ein flach liegendes Akkufach für einen
-Adafruit-328-LiPo (60 × 50 × 7.3 mm) hinzu. Das Gehäuse wächst dafür:
-  - in X auf ~66 mm (Akku 60 breit, Variante B = glatte Außenkontur)
-  - in +Y ("nach unten") um das Akkufach
-  - in +Z (Richtung Wand) nur so weit nötig, Display-Front bleibt bündig
+Fügt unter dem PCB-Stack ein flach liegendes Akkufach für eine Li-Ion-Zelle
+(Standard 40 × 28 × 5 mm) hinzu. Das Gehäuse wächst dafür nur in +Y ("nach
+unten") um das Fach; die X-Außenkontur und die Tiefe bleiben unverändert, die
+Display-Front bündig.
 
 Die Hardware-Konstanten und die geteilten Schalen-Parameter kommen weiter aus
 solarloader_common (sl). Hier liegen NUR die Akku-spezifischen Parameter und
