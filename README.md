@@ -287,10 +287,14 @@ ecosystem (ESP32-S3 Reverse TFT Feather + AdaloggerWing + RS485Wing).
 > **Firmware & software:** [github.com/exercise69/Solar-Loader](https://github.com/exercise69/Solar-Loader)
 
 Scripts:
-- `fusion_unterschale.py` — Bottom shell: display window, USB-C slot, SD card slot,
-  standoffs, M2 board screws, snap-fit connection lip
-- `fusion_oberschale.py` — Top shell: RS485 cable exit, M4 mounting holes
-- `SolarLoaderCase.scad` — Original OpenSCAD prototype (same geometry, for reference)
+- `fusion_unterschale_v6.py` — Bottom shell: display window, USB-C & SD slots,
+  living-hinge flex buttons, M2 board screws, Spiess-style snap lip, Li-ion
+  battery bay, rounded internal corners
+- `fusion_oberschale_v6.py` — Top shell: RS485 cable exit, M4 mounting holes,
+  matching notch grooves, battery retention tab
+- `solarloader_common.py` / `solarloader_v5.py` — shared hardware constants and
+  parametric battery/cavity geometry, imported by both shells
+- `SolarLoaderCase.scad` — Original OpenSCAD prototype (early geometry, for reference)
 
 ---
 

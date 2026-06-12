@@ -1,30 +1,18 @@
 """
-fusion_unterschale_v4.py — Unterschale mit Spiess-Stil Lip (dreieckiger Querschnitt).
+fusion_unterschale_v6.py — Unterschale V6 (Druck-Optimierung) mit Akkufach.
 
-Passend zu fusion_oberschale_v4.py.
+Basiert auf fusion_unterschale_v5.py. Änderungen ggü. V5 (Hinweise Druckerei):
+  - INNEN-RADIEN an den Ausschnitten (TFT-Fenster, Display-Mulde, USB-C, SD)
+    über abgerundete Schnitt-Werkzeuge — scharfe Innenecken sind Sollbruch-
+    stellen. Radius = Parameter 'inner_r'.
+  - DICKERE DISPLAY-FRONT: Parameter 'front_extra' verschiebt die Außen-Front
+    um diesen Betrag nach außen (-Z). Die dünne Bezel-Restwand unter dem
+    Display wächst damit (1,2 → ~1,7 mm), OHNE die Display-Einbautiefe zu
+    ändern (Mulde bleibt relativ zu iz0). Das Glas sitzt nur 'front_extra'
+    geschützt versenkt.
 
-Gemeinsame Hardware-Konstanten und geteilte Parameter kommen aus
-solarloader_common (define_common_params) — kein Doppelt-Definieren mehr.
-
-Parameter-Philosophie: create-if-missing (overwrite=False). Werte, die du in
-Fusion unter Modify → Change Parameters änderst, überleben einen Rebuild.
-Zum Zurücksetzen auf die Code-Defaults: define_common_params(des, overwrite=True)
-bzw. die set_param(..., overwrite=True)-Aufrufe.
-
-Änderungen gegenüber v3_1:
-  - Eck-Protrusions (Würfel) ersetzt durch durchgehende Lip-Leiste
-  - Lip läuft auf beiden langen Y-Seiten fast über volle X-Länge
-  - Dreieckiger Querschnitt via f.triangle_prism_x() (Spiess-Stil)
-  - Lip_front/Lip_back als separate Bodies (male part, rastet in Notch der Oberschale)
-  - RS485-Aussparung in der rechten Steckzungen-Wand
-
-Konstruktions-Strategie:
-  Shell und Lip werden als EIN KÖRPER gebaut (kein separate Join-Operation nötig):
-  1. Hoher Quader von oz0 bis split_z + lip_h
-  2. Innenraum aushöhlen (bis split_z+0.1)
-  3. Oberhalb split_z: Material außerhalb des Lip-Footprints entfernen (4 Schnitte)
-  4. Lip innen aushöhlen + RS485-Aussparung
-  5. Spiess-Lips als separate Bodies erzeugen (kein Join)
+Akku-Geometrie & Schalen-Mating bleiben identisch zu V5
+(solarloader_v5.cavity_xy / batt_extents). V5 bleibt unverändert erhalten.
 """
 import os, sys
 
@@ -49,12 +37,42 @@ _root = _f360_root()
 for _p in (_root, os.path.join(_root, 'examples', 'SolarLoader')):
     if _p not in sys.path:
         sys.path.append(_p)
-for _m in ('f360_helpers', 'solarloader_common'):
+for _m in ('f360_helpers', 'solarloader_common', 'solarloader_v5'):
     if _m in sys.modules:
         del sys.modules[_m]
 import f360_helpers as f
 import solarloader_common as sl
+import solarloader_v5 as sl5
 import adsk.core, adsk.fusion
+
+
+def _fillet_axis_edges(comp, body, r, axis):
+    """Verrundet die 4 zur 'axis' (x|y|z) parallelen Kanten eines Quaders."""
+    edges = adsk.core.ObjectCollection.create()
+    for e in body.edges:
+        a = e.startVertex.geometry
+        b = e.endVertex.geometry
+        dx, dy, dz = abs(b.x - a.x), abs(b.y - a.y), abs(b.z - a.z)
+        if axis == 'z' and dz >= dx and dz >= dy and dz > 1e-6:
+            edges.add(e)
+        elif axis == 'x' and dx >= dy and dx >= dz and dx > 1e-6:
+            edges.add(e)
+        elif axis == 'y' and dy >= dx and dy >= dz and dy > 1e-6:
+            edges.add(e)
+    if edges.count:
+        fi = comp.features.filletFeatures.createInput()
+        fi.addConstantRadiusEdgeSet(
+            edges, adsk.core.ValueInput.createByReal(r), True)
+        comp.features.filletFeatures.add(fi)
+
+
+def _rcut(comp, target, x0, y0, z0, x1, y1, z1, r, axis):
+    """Wie f.cut, aber das Schnitt-Werkzeug bekommt vorher Innen-Radien r
+    an den zur 'axis' parallelen Kanten -> abgerundete Ausschnitt-Ecken."""
+    tool = f.box(comp, x0, y0, z0, x1, y1, z1)
+    if r > 1e-6:
+        _fillet_axis_edges(comp, tool, r, axis)
+    f.cut(comp, target, tool)
 
 
 def run(_context):
@@ -62,7 +80,7 @@ def run(_context):
         _build()
     except Exception:
         import traceback
-        print('!!! FEHLER in fusion_unterschale_v4:\n' + traceback.format_exc())
+        print('!!! FEHLER in fusion_unterschale_v6:\n' + traceback.format_exc())
         raise
 
 
@@ -73,10 +91,14 @@ def _build():
 
     # ── 1. USER-PARAMETER ────────────────────────────────────────────────
     sl.define_common_params(des)          # geteilte Params (create-if-missing)
+    sl5.define_batt_params(des)           # Akku-Params (create-if-missing)
 
     ow = False                            # overwrite=False für alle Specifics
     f.set_param(des, 'lipo_h',      0.0,  'LiPo-Hoehenaufschlag mm',          ow)
     f.set_param(des, 'lip_wall',    1.6,  'Wandstaerke Steckzunge mm',        ow)
+    f.set_param(des, 'lip_foot',    1.2,  'Schulterhoehe Zungenbasis mm',     ow)
+    f.set_param(des, 'inner_r',     1.0,  'Innen-Radius Ausschnitt-Ecken mm', ow)
+    f.set_param(des, 'front_extra', 0.5,  'Display-Front Mehrdicke mm',       ow)
     f.set_param(des, 'recess_d',    1.3,  'Tiefe Display-Mulde von innen mm', ow)
     f.set_param(des, 'usbc_half',   5.0,  'USB-C Schlitz Halbbreite mm',      ow)
     f.set_param(des, 'usbc_z0',     1.2,  'USB-C Schlitz Z-Unterkante mm',    ow)
@@ -91,7 +113,6 @@ def _build():
     f.set_param(des, 'screw_d',     2.2,  'M2-Durchgangsloch mm',             ow)
     f.set_param(des, 'csk_d',       4.0,  'M2-Senkkopf Durchmesser mm',       ow)
     f.set_param(des, 'csk_dep',     1.5,  'M2-Senkkopf Tiefe mm',             ow)
-    # Flex-Taster (Living-Hinge) D0/D1/D2
     f.set_param(des, 'fb_pad',      5.0,  'Flex-Taster Pad-Kantenlaenge mm',  ow)
     f.set_param(des, 'fb_slot',     0.6,  'Flex-Taster Schlitzbreite mm',     ow)
     f.set_param(des, 'fb_hinge',    0.6,  'Flex-Taster Scharnier-Restwand mm', ow)
@@ -108,7 +129,10 @@ def _build():
 
     lip_h       = f.get_param_cm(des, 'lip_h')
     lip_wall    = f.get_param_cm(des, 'lip_wall')
+    lip_foot    = f.get_param_cm(des, 'lip_foot')
     lip_gap     = f.get_param_cm(des, 'lip_gap')
+    inner_r     = f.get_param_cm(des, 'inner_r')
+    front_extra = f.get_param_cm(des, 'front_extra')
 
     snap_d      = f.get_param_cm(des, 'snap_d')
     snap_h      = f.get_param_cm(des, 'snap_h')
@@ -138,9 +162,7 @@ def _build():
     rs485_y0    = f.get_param_cm(des, 'rs485_y0')
     rs485_y1    = f.get_param_cm(des, 'rs485_y1')
 
-    # ── 3. HARDWARE-KONSTANTEN (aus solarloader_common) ──────────────────
-    asm_x0, asm_x1 = sl.ASM_X0, sl.ASM_X1
-    asm_y0, asm_y1 = sl.ASM_Y0, sl.ASM_Y1
+    # ── 3. HARDWARE-KONSTANTEN ───────────────────────────────────────────
     pcb_z0  = sl.PCB_Z0
     pcb_cy  = sl.pcb_cy()
 
@@ -159,181 +181,151 @@ def _build():
               (f.cm(48.26), f.cm(1.84)),
               (f.cm(48.26), f.cm(20.96))]
 
-    # ── 4. ABGELEITETE GEOMETRIE ──────────────────────────────────────────
+    # ── 4. ABGELEITETE GEOMETRIE (V5: verbreitert + Akkufach) ────────────
     iz0 = pcb_z0 - f.cm(0.6)
 
-    ix0, ix1 = asm_x0 - clearance, asm_x1 + clearance
-    iy0, iy1 = asm_y0 - clearance, asm_y1 + clearance
+    # XY-Innenraum jetzt aus solarloader_v5 (geteilt mit Oberschale)
+    ix0, ix1, iy0, iy1 = sl5.cavity_xy(des)
 
     ox0, ox1 = ix0 - wall, ix1 + wall
     oy0, oy1 = iy0 - wall, iy1 + wall
-    oz0 = iz0 - wall
+    oz0 = iz0 - wall - front_extra      # Front dicker: Bezel-Restwand waechst
 
     usbc_y0 = pcb_cy - usbc_half
     usbc_y1 = pcb_cy + usbc_half
 
-    # Lip-Maße (passend in Oberschale-Innenraum, lip_gap Luft)
+    # Lip-Maße
     lx0, lx1 = ix0 + lip_gap, ix1 - lip_gap
     ly0, ly1 = iy0 + lip_gap, iy1 - lip_gap
 
-    # Lip-Geometrie
-    snap_z1 = split_z + lip_h - snap_top   # Lip-Oberkante (Rampe oben endet hier)
-    snap_z0 = snap_z1 - snap_h             # Lip-Unterkante (flache Rastfläche)
-    lip_x0  = lx0 + snap_margin            # X-Beginn der Lip-Leiste
-    lip_x1  = lx1 - snap_margin            # X-Ende der Lip-Leiste
+    snap_z1 = split_z + lip_h - snap_top
+    snap_z0 = snap_z1 - snap_h
+    lip_x0  = lx0 + snap_margin
+    lip_x1  = lx1 - snap_margin
 
-    e = f.cm(0.1)   # kleines Übermaß für saubere Schnitte
+    e = f.cm(0.1)
 
     # ── 5. MODELL ERSTELLEN ───────────────────────────────────────────────
     for name in ('Unterschale', 'Unterschale_v2', 'Unterschale_v3',
-                 'Unterschale_v3_1'):
+                 'Unterschale_v3_1', 'Unterschale_v4', 'Unterschale_v4 (1)',
+                 'Unterschale_v5'):
         occ = f.find_occurrence(root, name)
         if occ:
             occ.isLightBulbOn = False
-    f.delete_component(root, 'Unterschale_v4')
+    f.delete_component(root, 'Unterschale_v6')
 
-    print('Erstelle Unterschale_v4 ...')
-    us_occ = f.new_component(root, 'Unterschale_v4')
+    print('Erstelle Unterschale_v6 ...')
+    us_occ = f.new_component(root, 'Unterschale_v6')
     us = us_occ.component
 
     # 1. Hoher Quader: Shell + Lip als EIN Körper
-    #    Höhe geht bis split_z + lip_h (statt nur split_z)
     shell = f.box(us, ox0, oy0, oz0, ox1, oy1, split_z + lip_h)
-    shell.name = 'Unterschale_v4'
+    shell.name = 'Unterschale_v6'
     f.fillet_z_edges(us, shell, fillet_r)
     print('  Außenhülle + Verrundung (oz0 → split_z+lip_h)')
 
-    # 2. Innenraum aushöhlen (Shell-Kavität bis split_z)
-    #    split_z - e: lässt 0.1mm Verbindungsscheibe stehen → Lip-Säule bleibt mit Shell verbunden
-    f.cut(us, shell, f.box(us, ix0, iy0, iz0, ix1, iy1, split_z - e))
-    print('  Innenraum ausgehöhlt')
+    # 2. Innenraum aushöhlen — Kavität endet lip_foot unter split_z, damit
+    #    unter dem Zungen-Ring eine MASSIVE Schulter stehen bleibt, die die
+    #    Zunge solide mit der Gehäusewand verbindet (kein 0.1-mm-Steg mehr).
+    f.cut(us, shell, f.box(us, ix0, iy0, iz0, ix1, iy1, split_z - lip_foot))
+    print('  Innenraum + Akkufach ausgehöhlt (Schulter %.1f mm bleibt)'
+          % (lip_foot * 10))
 
-    # 3. Standoffs
+    # 3. Standoffs (PCB-Ecken, im oberen Y-Bereich)
     for px, py in so_pos:
         f.join(us, shell, f.cylinder(us, px, py, iz0, iz0 + so_h, so_od))
     print('  Standoffs')
 
     # 4. Oberhalb split_z: Lip-Form herausschneiden
-    #    Alles außerhalb des Lip-Footprints (lx0..lx1, ly0..ly1) entfernen
-    #    → Shell + Lip bleiben als ein einziger zusammenhängender Körper
-
-    # Links (X < lx0)
-    f.cut(us, shell, f.box(us, ox0-e, oy0-e, split_z,
-                                lx0, oy1+e, split_z+lip_h+e))
-    # Rechts (X > lx1)
-    f.cut(us, shell, f.box(us, lx1, oy0-e, split_z,
-                                ox1+e, oy1+e, split_z+lip_h+e))
-    # Vorne (Y < ly0, im X-Bereich des Lips)
-    f.cut(us, shell, f.box(us, lx0, oy0-e, split_z,
-                                lx1, ly0, split_z+lip_h+e))
-    # Hinten (Y > ly1, im X-Bereich des Lips)
-    f.cut(us, shell, f.box(us, lx0, ly1, split_z,
-                                lx1, oy1+e, split_z+lip_h+e))
+    f.cut(us, shell, f.box(us, ox0-e, oy0-e, split_z, lx0, oy1+e, split_z+lip_h+e))
+    f.cut(us, shell, f.box(us, lx1, oy0-e, split_z, ox1+e, oy1+e, split_z+lip_h+e))
+    f.cut(us, shell, f.box(us, lx0, oy0-e, split_z, lx1, ly0, split_z+lip_h+e))
+    f.cut(us, shell, f.box(us, lx0, ly1, split_z, lx1, oy1+e, split_z+lip_h+e))
     print('  Lip-Außenform geschnitten (Shell+Lip = 1 Körper)')
 
-    # 5. Lip innen aushöhlen
+    # 5. Lip innen aushöhlen — bis unter die Schulter (split_z - lip_foot),
+    #    damit der Innenraum offen bleibt und die Schulter nur als RING
+    #    (Wand-Innenfläche → Zungen-Innenfläche) stehen bleibt.
     f.cut(us, shell, f.box(us,
-        lx0 + lip_wall, ly0 + lip_wall, split_z - e,
+        lx0 + lip_wall, ly0 + lip_wall, split_z - lip_foot - e,
         lx1 - lip_wall, ly1 - lip_wall, split_z + lip_h + e))
-    print('  Lip innen ausgehöhlt')
+    print('  Lip innen ausgehöhlt (Schulter bleibt als Ring)')
 
-    # 5b. RS485-Aussparung: rechte Steckzungen-Wand über der Klemme unterbrechen
-    #     Sonst säße der umlaufende Oberschalen-Rand in der RS485-Klemme.
-    #     Y = rs485_y0..rs485_y1 (gleiche Breite wie das RS485-Kabelfenster)
+    # 5b. RS485-Aussparung (rechte Steckzungen-Wand) — bis unter die Schulter,
+    #     damit der Kabelkanal nicht von der neuen Schulter blockiert wird.
     f.cut(us, shell, f.box(us,
-        lx1 - lip_wall - e, rs485_y0, split_z - e,
+        lx1 - lip_wall - e, rs485_y0, split_z - lip_foot - e,
         lx1 + e,           rs485_y1, split_z + lip_h + e))
-    print('  RS485-Aussparung in Steckzunge (rechte Wand unterbrochen)')
+    print('  RS485-Aussparung in Steckzunge')
 
-    # 6. Spiess-Lip — dreieckige Leiste auf beiden langen Y-Seiten (male part)
-    #    Separate Bodies → in Fusion ggf. nachpositionieren,
-    #    dann mit Modify → Combine joinen.
-    #
-    #  Dreieck (vordere Seite, Überstand -Y von ly0):
-    #    Ecke 1: (ly0,         snap_z1)  Wandfläche oben
-    #    Ecke 2: (ly0,         snap_z0)  Wandfläche unten
-    #    Ecke 3: (ly0-snap_d,  snap_z0)  Außenspitze unten → flache Rastfläche unten
-    #    → Schräge OBEN (Lead-in beim Aufstecken), flache Rastfläche UNTEN (Verriegelung)
-
-    # Vordere Seite (ly0, Überstand -Y)
+    # 6. Spiess-Lip (dreieckige Leiste auf beiden langen Y-Seiten).
+    #    Basis ragt um e in die Lip-Wand (Ueberlappung), damit join() sicher
+    #    greift -> Schnappnocken werden TEIL der Schale (eine Body, druckbar).
     lip_front = f.triangle_prism_x(us,
         lip_x0, lip_x1,
-        ly0,          snap_z1,
-        ly0,          snap_z0,
+        ly0 + e,      snap_z1,
+        ly0 + e,      snap_z0,
         ly0 - snap_d, snap_z0)
-    lip_front.name = 'Lip_front'
+    f.join(us, shell, lip_front)
 
-    # Hintere Seite (ly1, Überstand +Y)
     lip_back = f.triangle_prism_x(us,
         lip_x0, lip_x1,
-        ly1,          snap_z1,
-        ly1,          snap_z0,
+        ly1 - e,      snap_z1,
+        ly1 - e,      snap_z0,
         ly1 + snap_d, snap_z0)
-    lip_back.name = 'Lip_back'
+    f.join(us, shell, lip_back)
+    print('  Spiess-Lip (2× Δ, %s mm) — mit Schale verbunden'
+          % str(round((lip_x1 - lip_x0) * 10, 1)))
 
-    print('  Spiess-Lip (2× Δ-Querschnitt, separat, '
-          + str(round((lip_x1 - lip_x0) * 10, 1)) + ' mm lang)')
-
-    # 7. Display-Mulde von innen
-    f.cut(us, shell, f.box(us,
+    # 7. Display-Mulde von innen (Ecken verrundet)
+    _rcut(us, shell,
         recess_x0, recess_y0, iz0 - recess_d - e,
-        recess_x1, recess_y1, iz0 + e))
-    print('  Display-Mulde  (Restwand='
-          + str(round((wall - recess_d) * 10, 1)) + ' mm)')
+        recess_x1, recess_y1, iz0 + e, inner_r, 'z')
+    print('  Display-Mulde (Ecken R%.1f)' % (inner_r * 10))
 
-    # 8. TFT-Fenster
-    f.cut(us, shell, f.box(us,
+    # 8. TFT-Fenster (Ecken verrundet) — durch die ganze (dickere) Front bis iz0
+    _rcut(us, shell,
         disp_cx - disp_w/2, disp_cy - disp_h/2, oz0 - e,
-        disp_cx + disp_w/2, disp_cy + disp_h/2, oz0 + wall + e))
-    print('  TFT-Fenster')
+        disp_cx + disp_w/2, disp_cy + disp_h/2, iz0 + e, inner_r, 'z')
+    print('  TFT-Fenster (Ecken R%.1f)' % (inner_r * 10))
 
-    # 9. USB-C-Schlitz  (Z auf echte Stecker-Öffnung 3.17mm zentriert, ~0.4mm Luft rundum)
-    f.cut(us, shell, f.box(us,
+    # 9. USB-C-Schlitz (Ecken verrundet; Durchbruch in -X-Wand -> Achse x)
+    _rcut(us, shell,
         ox0 - e, usbc_y0, usbc_z0,
-        ix0 + f.cm(4.0), usbc_y1, usbc_z1))
-    print('  USB-C-Schlitz')
+        ix0 + f.cm(4.0), usbc_y1, usbc_z1, inner_r, 'x')
+    print('  USB-C-Schlitz (Ecken R%.1f)' % (inner_r * 10))
 
-    # 10. Flex-Taster D0/D1/D2 (Living-Hinge) + Reset als Pinhole
-    #     Pad in der Display-Mulden-Restwand, 3-seitig durch die Wand
-    #     freigeschnitten; Scharnier-Steg bleibt auf der -X-Seite stehen und
-    #     wird von innen auf fb_hinge ausgedünnt (Außenfläche bleibt glatt).
-    #     Der Innen-Nocken überbrückt den ~1.94mm-Luftspalt bis kurz vor die
-    #     gemessene Taster-Oberkante (-1.90mm), fb_nub_gap Ruheluft.
-    recess_inner = iz0 - recess_d          # Pad-Innenfläche (Restwand innen)
-    btn_top_z    = f.cm(-1.90)             # gemessene Taster-Oberkante (display-seitig)
-    nub_tip_z    = btn_top_z - fb_nub_gap  # Nocken-Spitze
+    # 10. Flex-Taster D0/D1/D2 + Reset-Pinhole
+    recess_inner = iz0 - recess_d
+    btn_top_z    = f.cm(-1.90)
+    nub_tip_z    = btn_top_z - fb_nub_gap
     hp = fb_pad / 2.0
     for by in btn_ys:
         sz0, sz1 = oz0 - e, recess_inner + e
-        # U-Schlitz, rechte Seite (+X)
         f.cut(us, shell, f.box(us,
             btn_x + hp,           by - hp - fb_slot, sz0,
             btn_x + hp + fb_slot, by + hp + fb_slot, sz1))
-        # oben (+Y)
         f.cut(us, shell, f.box(us,
             btn_x - hp, by + hp,           sz0,
             btn_x + hp, by + hp + fb_slot, sz1))
-        # unten (−Y)
         f.cut(us, shell, f.box(us,
             btn_x - hp, by - hp - fb_slot, sz0,
             btn_x + hp, by - hp,           sz1))
-        # Scharnier-Nut: Verbindungssteg (-X) von innen auf fb_hinge ausdünnen
         f.cut(us, shell, f.box(us,
             btn_x - hp - fb_hinge_w/2.0, by - hp, oz0 + fb_hinge,
             btn_x - hp + fb_hinge_w/2.0, by + hp, recess_inner + e))
-        # Druck-Nocken auf der Pad-Innenseite
         f.join(us, shell, f.cylinder(us,
             btn_x, by, recess_inner - e, nub_tip_z, fb_nub_d))
-    # Reset bleibt Pinhole (Ø btn_d)
     f.cut(us, shell, f.cylinder(us,
-        rst_x, rst_y, oz0 - e, oz0 + wall + e, btn_d))
-    print('  Flex-Taster D0/D1/D2 (Living-Hinge) + Reset-Pinhole')
+        rst_x, rst_y, oz0 - e, iz0 + e, btn_d))
+    print('  Flex-Taster D0/D1/D2 + Reset-Pinhole')
 
-    # 11. SD-Karten-Schlitz
-    f.cut(us, shell, f.box(us,
-        ix1 - e, sd_y0, sd_z0,
-        ix1 + wall + e, sd_y1, sd_z1))
-    print('  SD-Karten-Schlitz')
+    # 11. SD-Karten-Schlitz (innen bis Board-Kante verankert; Ecken verrundet,
+    #     Durchbruch in +X-Wand -> Achse x)
+    _rcut(us, shell,
+        f.cm(53.0), sd_y0, sd_z0,
+        ix1 + wall + e, sd_y1, sd_z1, inner_r, 'x')
+    print('  SD-Karten-Schlitz (Ecken R%.1f)' % (inner_r * 10))
 
     # 12. Board-Schrauben M2
     for px, py in so_pos:
@@ -343,8 +335,8 @@ def _build():
             oz0 - e, iz0 + so_h + e, screw_d))
     print('  Board-Schrauben (M2)')
 
-    print('✓ Unterschale_v4 fertig!  ' + f.bbox_str(shell))
-    print('  Lip: Spiess-Stil Δ, snap_d=' + str(round(snap_d*10,1))
-          + ' mm, snap_h=' + str(round(snap_h*10,1)) + ' mm'
-          + ', snap_top=' + str(round(snap_top*10,1)) + ' mm')
-    print('  Parameter: Modify → Change Parameters')
+    print('✓ Unterschale_v6 fertig!  ' + f.bbox_str(shell))
+    print('  Innen X=%.1f..%.1f (%.1f)  Y=%.1f..%.1f (%.1f)'
+          % (ix0*10, ix1*10, (ix1-ix0)*10, iy0*10, iy1*10, (iy1-iy0)*10))
+    print('  Front-Bezel jetzt %.1f mm (Wand %.1f + front_extra %.1f - Mulde %.1f)'
+          % ((wall + front_extra - recess_d)*10, wall*10, front_extra*10, recess_d*10))
