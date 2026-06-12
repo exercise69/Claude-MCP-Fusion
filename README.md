@@ -211,6 +211,58 @@ def run(_context):
     # your code here
 ```
 
+### Connecting today: the official Fusion MCP connector
+
+Recent Fusion ships a built-in MCP server (Streamable HTTP at
+`http://127.0.0.1:27182/mcp`) exposing:
+
+- `fusion_mcp_execute` — run a Python script (`featureType="script"`,
+  `object.script=<code>`; the code needs `def run(_context):`). `print()` output
+  comes back as the result; don't catch exceptions or you lose the traceback.
+- `fusion_mcp_read` — `apiDocumentation` lookups (so you check real API
+  signatures instead of guessing), `screenshot` with named directions
+  (`iso-top-right`, `front`, …), and document/project queries.
+- `fusion_mcp_update` — targeted model updates.
+
+Point any MCP client at that URL — Claude Code via a project `.mcp.json`
+(`{"mcpServers":{"fusion":{"type":"http","url":"http://127.0.0.1:27182/mcp"}}}`),
+or the Claude desktop app's connector — and Claude drives Fusion directly. A
+from-scratch bridge add-in (e.g. ndoo/fusion360-mcp-bridge) works too. MCP
+servers load at **session start**, so a newly added connector needs a fresh
+session.
+
+### The method: build → verify → iterate
+
+Scripted CAD is powerful because you can **prove** correctness instead of
+eyeballing a render:
+
+- `f.bbox_str(body)` for size/position,
+- **body count** per component (`comp.bRepBodies.count` == 1 for a printable,
+  welded solid),
+- `body.pointContainment(point)` to prove material sits exactly where it must
+  (e.g. a connecting shoulder fills a gap; a clearance stays open),
+- a screenshot for overall shape — but Fusion's shading washes out thin
+  features, so prefer the numeric proofs for fine detail.
+
+Drive geometry from user parameters (`f.set_param`) so most fixes are one number.
+
+### Best practices that prevent reprints
+
+- **Round internal cut corners** by filleting the cut *tool* before cutting —
+  sharp internal corners are crack-starters.
+- **Weld** snap tabs / lips / ribs into the shell with `join()`; overlap by
+  ~0.1 mm, since `join()` ignores merely-touching bodies — otherwise the STL
+  silently drops them (catch it with the body-count check).
+- **Keep STL/STEP/3MF exports outside the repo** — they're binaries/artifacts.
+- **Look up the API** via `fusion_mcp_read` `apiDocumentation` rather than guess.
+
+### Bundled Claude skill
+
+[`claude-skill/fusion360-cad/`](claude-skill/fusion360-cad/) packages this whole
+workflow as an installable skill for Claude Code / the Claude desktop app, so a
+fresh session auto-loads the conventions, the helper reference, and the gotchas.
+Drop it into your skills directory (e.g. `~/.claude/skills/`).
+
 ---
 
 ## Known Gotchas
